@@ -9,15 +9,19 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets LinguistTools Network)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools)
-
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Network)
 set(TS_FILES ZCamPfcs_pt_BR.ts)
 
 set(PROJECT_SOURCES
         main.cpp
         mainwindow.cpp
         mainwindow.h
+        zopenprotocol.cpp
+        zopenprotocol.h
+        zpfcsprotocol.cpp
+        zpfcsprotocol.h
         mainwindow.ui
         ${TS_FILES}
 )
@@ -50,6 +54,7 @@ else()
 endif()
 
 target_link_libraries(ZCamPfcs PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(ZCamPfcs PRIVATE Qt${QT_VERSION_MAJOR}::Network)
 
 set_target_properties(ZCamPfcs PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com

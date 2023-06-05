@@ -3,10 +3,35 @@
 #include <QApplication>
 #include <QLocale>
 #include <QTranslator>
+#include <QDateTime>
+#include <iostream>
+
+
+void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    const QString txt(QString(QDateTime::currentDateTime().toString() + ": "
+                              + QString("%1(%2): %3").arg(context.file).arg(context.line).arg(msg)));
+    switch (type) {
+    case QtInfoMsg:
+    case QtDebugMsg:
+    case QtWarningMsg:
+    case QtCriticalMsg:
+        // redundant check, could be removed, or the
+        // upper if statement could be removed
+        MainWindow::gOutStream << txt;
+        std::cout << txt.toStdString() << std::endl;
+        if(MainWindow::gOutStream.count() > 200)
+            MainWindow::gOutStream.removeFirst();
+        break;
+    case QtFatalMsg:
+        abort();
+    }
+}
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    qInstallMessageHandler(myMessageOutput);
 
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
