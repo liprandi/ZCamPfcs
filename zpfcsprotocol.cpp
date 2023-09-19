@@ -99,6 +99,7 @@ void ZPfcsProtocol::run()
 bool ZPfcsProtocol::sendSol9999()
 {
     bool ret = false;
+    QString str;
 
     QByteArray d;
     d += "CamDoBra";    // vendor company name
@@ -108,9 +109,11 @@ bool ZPfcsProtocol::sendSol9999()
     QByteArray b;
     b += m_solID.toLatin1();
     b += "   ";
-    b += QString("%1").arg(++m_solSeqNumber, 6, QChar('0')).toLatin1();
+    str = QString("%1").arg(++m_solSeqNumber, 6, 10, QChar('0'));
+    b += str.toLatin1();
     b += "9999";
-    b += QString("%1").arg(d.length(), 4, QChar('0')).toLatin1();
+    str = QString("%1").arg(d.length(), 4, 10, QChar('0'));
+    b += str.toLatin1();
     b += d;
     b += '\r';
     m_tcpsol->write(b);
@@ -126,6 +129,7 @@ bool ZPfcsProtocol::sendSol9999()
 bool ZPfcsProtocol::sendUnsol9999()
 {
     bool ret = false;
+    QString str;
 
     QByteArray d;
     d += "CamDoBra";    // vendor company name
@@ -135,9 +139,11 @@ bool ZPfcsProtocol::sendUnsol9999()
     QByteArray b;
     b += m_unsolID.toLatin1();
     b += "   ";
-    b += QString("%1").arg(++m_unsolSeqNumber, 6, QChar('0')).toLatin1();
+    str = QString("%1").arg(++m_unsolSeqNumber, 6, 10, QChar('0'));
+    b += str.toLatin1();
     b += "9999";
-    b += QString("%1").arg(d.length(), 4, QChar('0')).toLatin1();
+    str = QString("%1").arg(d.length(), 4, 10, QChar('0'));
+    b += str.toLatin1();
     b += d;
     b += '\r';
     m_tcpunsol->write(b);

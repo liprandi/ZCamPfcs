@@ -50,8 +50,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="zpfcsprotocol.cpp" line="175"/>
-        <location filename="zpfcsprotocol.cpp" line="203"/>
+        <location filename="zpfcsprotocol.cpp" line="181"/>
+        <location filename="zpfcsprotocol.cpp" line="209"/>
         <source>PFD: cannot open port </source>
         <translation type="unfinished"></translation>
     </message>
