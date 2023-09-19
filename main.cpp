@@ -4,11 +4,15 @@
 #include <QLocale>
 #include <QTranslator>
 #include <QDateTime>
+#include <QMutex>
 #include <iostream>
 
+QMutex messageMutex;
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
+    QMutexLocker locker(&messageMutex);
+
     const QString txt(QString(QDateTime::currentDateTime().toString() + ": "
                               + QString("%1(%2): %3").arg(context.file).arg(context.line).arg(msg)));
     switch (type) {

@@ -3,7 +3,6 @@
 
 #include <QThread>
 #include <QTcpSocket>
-#include <QTcpServer>
 
 class ZPfcsProtocol: public QThread
 {
@@ -14,19 +13,24 @@ public:
     void run() override;
 
 public:
-    void init(const QString& addr, const QString& machineID, quint16 sol, quint16 unsol);
+    void init(const QString& addr, const QString& solID, quint16 sol, const QString &unsolID, quint16 unsol);
 private:
     bool openTcpSol();
-private slots:
-    void receivedUnsol();
+    bool openTcpUnsol();
+    bool checkMessageUnsol();
+    bool sendSol9999();
+    bool sendUnsol9999();
 private:
     QTcpSocket* m_tcpsol;
-    QTcpServer* m_tcpunsol;
+    QTcpSocket* m_tcpunsol;
     QString m_message;
     QString m_addr;
-    QString m_machineID;     // 4 letter machine ID
+    QString m_solID;    // 4 letter machine ID for sol
+    QString m_unsolID;  // 4 letter machine ID for unsol
     quint16 m_sol;      // sollicited port
     quint16 m_unsol;    // unsollicited port
+    uint    m_solSeqNumber; // sequence number
+    uint    m_unsolSeqNumber; // sequence number
     bool m_quit;
     bool m_run;
 };

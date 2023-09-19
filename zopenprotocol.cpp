@@ -56,7 +56,7 @@ void ZOpenprotocol::run()
     }
     if(m_tcp)
     {
-        const char* msg = "00200063            \x00";
+        const char* msg = "00200063            \x00";  //rev.003
         qDebug() << "->Openprotocol(" << (strlen(msg) + 1) << "):" << msg;
         m_tcp->write(msg, 21);   //MID0063 unsubscribe
         m_tcp->flush();
@@ -107,8 +107,8 @@ bool ZOpenprotocol::connectMID0001()
             qDebug() << "Openprotocol(" << data.length() << "): " << data;
             if(data.length() > 57)  // MID 0002 OK
             {
-                m_data.torqueControllerName = data.mid(32, 25);
-                removeRightSpace(m_data.torqueControllerName);
+                m_data.controllerName = data.mid(32, 25);
+                removeRightSpace(m_data.controllerName);
                 ret = true;
             }
             else if(data.length() == 20) // MID 0003 OR MID004
@@ -127,7 +127,7 @@ bool ZOpenprotocol::connectMID0060()
     bool ret = false;
     if(m_tcp)
     {
-        const char* msg = "00200060001         \x00";
+        const char* msg = "00200060003         \x00";  //rev. 003
         qDebug() << "->Openprotocol(" << (strlen(msg) + 1) << "):" << msg;
         m_tcp->write(msg, 21); // MID0060
         if(m_tcp->waitForReadyRead(3000))
@@ -154,36 +154,235 @@ bool ZOpenprotocol::connectMID0061()
         {
             auto data = m_tcp->readAll();
             qDebug() << "Openprotocol(" << data.length() << "): " << data;
-            if(data.length() >= 385)
+            int idx = 20;
+            while(data.length() >= idx + 2)
             {
-                m_data.cellId = data.mid(22, 4).toULong();
-                m_data.channelId = data.mid(28, 2).toULong();
-                m_data.torqueControllerName = data.mid(32, 25);
-                removeRightSpace(m_data.torqueControllerName);
-                m_data.vinNumber = data.mid(59, 25);
-                removeRightSpace(m_data.vinNumber);
-                m_data.jobId = data.mid(86, 2).toULong();
-                m_data.parameterSetId = data.mid(92, 3).toULong();
-                m_data.strategy = data.mid(97, 2).toULong();
-                m_data.tighteningStatus = data[120] == '1';
-                 m_data.torqueStatus = data[126] - '1';
-                m_data.angleStatus = data[127] - '1';
-                m_data.minTorque = data.mid(159, 6).toFloat() / 100.f;
-                m_data.maxTorque = data.mid(167, 6).toFloat() / 100.f;
-                m_data.targetTorque = data.mid(175, 6).toFloat() / 100.f;
-                m_data.torque = data.mid(183, 6).toFloat() / 100.f;
-                m_data.minAngle = data.mid(191, 5).toFloat();
-                m_data.maxAngle = data.mid(198, 5).toFloat();
-                m_data.targetAngle = data.mid(205, 5).toFloat();
-                m_data.angle = data.mid(212, 5).toFloat();
-                m_data.timeStamp = data.mid(345, 19);
-                m_data.timeLastChange = data.mid(366, 19);
-                resultText();
-                const char* msg = "00200062            \x00";
-                qDebug() << "->Openprotocol(" << (strlen(msg) + 1) << "):" << msg;
-                m_tcp->write(msg, 21); // MID0062
-                ret = true;
+                int id = data.mid(idx, 2).toInt();
+                int len;
+                idx += 2;
+                switch(id)
+                {
+                case 1:
+                    len = 4;
+                    m_data.cellId = data.mid(idx, len).toULong();
+                    idx += len;
+                    break;
+                case 2:
+                    len = 2;
+                    m_data.channelId = data.mid(idx, len).toULong();
+                    idx += len;
+                    break;
+                case 3:
+                    len = 25;
+                    m_data.controllerName = data.mid(idx, len);
+                    idx += len;
+                    break;
+                case 4:
+                    len = 25;
+                    m_data.vinNumber = data.mid(idx, len);
+                    removeRightSpace(m_data.vinNumber);
+                    idx += len;
+                    break;
+                case 5:
+                    len = 4;
+                    m_data.jobId = data.mid(idx, len).toULong();
+                    idx += len;
+                    break;
+                case 6:
+                    len = 3;
+                    m_data.programNumber = data.mid(idx, len).toULong();
+                    idx += len;
+                    break;
+                case 7:
+                    len = 2;
+                    idx += len;
+                    break;
+                case 8:
+                    len = 5;
+                    idx += len;
+                    break;
+                case 9:
+                    len = 4;
+                    m_data.okCounterLimit = data.mid(idx, len).toULong();
+                    idx += len;
+                    break;
+                case 10:
+                    len = 4;
+                    m_data.counterValue = data.mid(idx, len).toULong();
+                    idx += len;
+                    break;
+                case 11:
+                    len = 1;
+                    m_data.tighteningStatus = data[idx] - '0';
+                    idx += len;
+                    break;
+                case 12:
+                    len = 1;
+                    m_data.counterStatus = data[idx]  - '0';
+                    idx += len;
+                    break;
+                case 13:
+                    len = 1;
+                    m_data.torqueStatus = data[idx]  - '0';
+                    idx += len;
+                    break;
+                case 14:
+                    len = 1;
+                    m_data.angleStatus = data[idx]  - '0';
+                    idx += len;
+                    break;
+                case 15:
+                    len = 1;
+                    m_data.totalAngleStatus = data[idx]  - '0';
+                    idx += len;
+                    break;
+                case 16:
+                    len = 1;
+                    m_data.powerRedundancy = data[idx]  - '0';
+                    idx += len;
+                    break;
+                case 17:
+                case 18:
+                case 19:
+                    len = 1;
+                    idx += len;
+                    break;
+                case 20:
+                    len = 10;
+                    m_data.tighteningStatusStr = data.mid(idx, len);
+                    idx += len;
+                    break;
+                case 21:
+                    len = 6;
+                    m_data.minTorque = data.mid(idx, len).toFloat() / 100.f;
+                    idx += len;
+                    break;
+                case 22:
+                    len = 6;
+                    m_data.maxTorque = data.mid(idx, len).toFloat() / 100.f;
+                    idx += len;
+                    break;
+                case 23:
+                    len = 6;
+                    m_data.targetTorque = data.mid(idx, len).toFloat() / 100.f;
+                    idx += len;
+                    break;
+                case 24:
+                    len = 6;
+                    m_data.torque = data.mid(idx, len).toFloat() / 100.f;
+                    idx += len;
+                    break;
+                case 25:
+                    len = 5;
+                    m_data.minAngle = data.mid(idx, len).toFloat();
+                    idx += len;
+                    break;
+                case 26:
+                    len = 5;
+                    m_data.maxAngle = data.mid(idx, len).toFloat();
+                    idx += len;
+                    break;
+                case 27:
+                    len = 5;
+                    m_data.targetAngle = data.mid(idx, len).toFloat();
+                    idx += len;
+                    break;
+                case 28:
+                    len = 5;
+                    m_data.angle = data.mid(idx, len).toFloat();
+                    idx += len;
+                    break;
+                case 29:
+                    len = 5;
+                    m_data.totalAngleMin = data.mid(idx, len).toFloat();
+                    idx += len;
+                    break;
+                case 30:
+                    len = 5;
+                    m_data.totalAngleMax = data.mid(idx, len).toFloat();
+                    idx += len;
+                    break;
+                case 31:
+                    len = 5;
+                    m_data.totalAngle = data.mid(idx, len).toFloat();
+                    idx += len;
+                    break;
+                case 32:
+                    len = 3;
+                    m_data.powerMin = data.mid(idx, len).toFloat();
+                    idx += len;
+                    break;
+                case 33:
+                    len = 3;
+                    m_data.powerMax = data.mid(idx, len).toFloat();
+                    idx += len;
+                    break;
+                case 34:
+                    len = 3;
+                    m_data.power = data.mid(idx, len).toFloat();
+                    idx += len;
+                    break;
+                case 35:
+                case 36:
+                case 37:
+                case 38:
+                case 39:
+                case 40:
+                    len = 6;
+                    idx += len;
+                    break;
+                case 41:
+                    len = 10;
+                    m_data.tighteningID = data.mid(idx, len);
+                    idx += len;
+                    break;
+                case 42:
+                    len = 5;
+                    m_data.jobSeqNumber = data.mid(idx, len).toULong();
+                    idx += len;
+                    break;
+                case 43:
+                    len = 5;
+                    m_data.syncTighteningId = data.mid(idx, len).toULong();
+                    idx += len;
+                    break;
+                case 44:
+                    len = 14;
+                    m_data.serialNumber = data.mid(idx, len);
+                    idx += len;
+                    break;
+                case 45:
+                    len = 19;
+                    m_data.timeStamp = data.mid(idx, len);
+                    idx += len;
+                    break;
+                case 46:
+                    len = 19;
+                    m_data.timeLastChange = data.mid(idx, len);
+                    idx += len;
+                    break;
+                case 47:
+                    len = 25;
+                    m_data.programName = data.mid(idx, len);
+                    idx += len;
+                    break;
+                case 48:
+                    len = 1;
+                    m_data.torqueUnit = data[idx]  - '0';
+                    idx += len;
+                    break;
+                case 49:
+                    len = 2;
+                    m_data.resultStatus = data.mid(idx, len).toULong();
+                    idx += len;
+                    break;
+                }
             }
+            resultText();
+            const char* msg = "00200062            \x00";
+            qDebug() << "->Openprotocol(" << (strlen(msg) + 1) << "):" << msg;
+            m_tcp->write(msg, 21); // MID0062
+            ret = true;
         }
         else
         {
@@ -218,9 +417,5 @@ void ZOpenprotocol::removeRightSpace(QString& str)
 }
 void ZOpenprotocol::resultText()
 {
-    m_message = QString("OPENPROTOCOL\n%1\nTorque: %2 Nm\n") // Ângulo: %3\n°
-                .arg(m_data.tighteningStatus ? "1": "0")
-                .arg(double(m_data.torque), 6, 'f', 2)
-                /*.arg(double(m_data.angle), 6, 'f', 1)*/;
-    emit dataReady(m_message);
+    emit dataReady(m_data);
 }
