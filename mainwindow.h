@@ -11,6 +11,17 @@ namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 #define kMaxScrews 100
 
+struct ConfigScrew
+{
+    QString   m_addrPfcsProtocol;
+    QString   m_idSolPfcsProtocol;
+    QString   m_idUnsolPfcsProtocol;
+    quint16   m_solPfcsProtocol;
+    quint16   m_unsolPfcsProtocol;
+    quint16   m_channel;
+    quint16   m_program;
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -29,11 +40,12 @@ private:
 private:
     QString   m_addrOpenProtocol;
     quint16   m_portOpenProtocol;
-    QString   m_addrPfcsProtocol[kMaxScrews];
+    ConfigScrew m_screw[kMaxScrews];
+/*    QString   m_addrPfcsProtocol[kMaxScrews];
     QString   m_idSolPfcsProtocol[kMaxScrews];
     QString   m_idUnsolPfcsProtocol[kMaxScrews];
     quint16   m_solPfcsProtocol[kMaxScrews];
-    quint16   m_unsolPfcsProtocol[kMaxScrews];
+    quint16   m_unsolPfcsProtocol[kMaxScrews];*/
 
     Ui::MainWindow *ui;
 public:

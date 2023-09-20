@@ -27,13 +27,15 @@ ZPfcsProtocol::~ZPfcsProtocol()
     }
  }
 
-void ZPfcsProtocol::init(const QString& addr, const QString& solID, quint16 sol, const QString& unsolID, quint16 unsol)
+void ZPfcsProtocol::init(const QString& addr, const QString& solID, quint16 sol, const QString& unsolID, quint16 unsol, quint16 channel, quint16 program)
 {
     m_addr = addr;
     m_solID = solID;
     m_unsolID = unsolID;
     m_sol = sol;
-    m_unsol = unsol;
+    m_unsol = channel;
+    m_channel = program;
+    m_program = unsol;
     if(m_solID.length() > 4)
         m_solID.truncate(4);
     if(m_solID.length() < 4)
@@ -48,7 +50,7 @@ void ZPfcsProtocol::init(const QString& addr, const QString& solID, quint16 sol,
         for(qsizetype i = m_unsolID.length(); i < 4; i++)
             m_unsolID.push_back(QChar(' '));
     }
-    qDebug() << tr("PFD ") << m_solID << "=" << m_addr << ":" << m_sol << "/" << m_unsolID << "=" << m_addr << ":" << m_unsol;
+    qDebug() << tr("PFD ") << m_solID << "=" << m_addr << ":" << m_sol << "/" << m_unsolID << "=" << m_addr << ":" << m_unsol << " screw=" << m_channel << "." << m_program;
     start();
 }
 void ZPfcsProtocol::run()

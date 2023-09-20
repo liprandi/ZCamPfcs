@@ -45,13 +45,13 @@
 <context>
     <name>ZPfcsProtocol</name>
     <message>
-        <location filename="zpfcsprotocol.cpp" line="51"/>
+        <location filename="zpfcsprotocol.cpp" line="53"/>
         <source>PFD </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="zpfcsprotocol.cpp" line="181"/>
-        <location filename="zpfcsprotocol.cpp" line="209"/>
+        <location filename="zpfcsprotocol.cpp" line="183"/>
+        <location filename="zpfcsprotocol.cpp" line="211"/>
         <source>PFD: cannot open port </source>
         <translation type="unfinished"></translation>
     </message>

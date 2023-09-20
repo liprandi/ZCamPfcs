@@ -13,7 +13,7 @@ public:
     void run() override;
 
 public:
-    void init(const QString& addr, const QString& solID, quint16 sol, const QString &unsolID, quint16 unsol);
+    void init(const QString& addr, const QString& solID, quint16 sol, const QString &unsolID, quint16 unsol, quint16 channel, quint16 program);
 private:
     bool openTcpSol();
     bool openTcpUnsol();
@@ -29,6 +29,8 @@ private:
     QString m_unsolID;  // 4 letter machine ID for unsol
     quint16 m_sol;      // sollicited port
     quint16 m_unsol;    // unsollicited port
+    quint16 m_channel;   // channel connected to this screw
+    quint16 m_program;   // program connected to this screw
     uint    m_solSeqNumber; // sequence number
     uint    m_unsolSeqNumber; // sequence number
     bool m_quit;

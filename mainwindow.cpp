@@ -18,15 +18,18 @@ MainWindow::MainWindow(QWidget *parent)
 
     for(int i = 0; i < kMaxScrews; i++)
     {
+        auto& s = m_screw[i];
         m_pfcd[i] = 0l;
-        m_solPfcsProtocol[i] = 0;
-        m_unsolPfcsProtocol[i] = 0;
+        s.m_solPfcsProtocol = 0;
+        s.m_unsolPfcsProtocol = 0;
 
-        m_addrPfcsProtocol[i] = m_settings.value(QString("pfcsprotocol/addr_%1").arg(i + 1, 2, 10, QChar('0')), "0.0.0.0").toString();
-        m_idSolPfcsProtocol[i] = m_settings.value(QString("pfcsprotocol/idsol_%1").arg(i + 1, 2, 10, QChar('0')), "0.0.0.0").toString();
-        m_solPfcsProtocol[i] = quint16(m_settings.value(QString("pfcsprotocol/sol_%1").arg(i + 1, 2, 10, QChar('0')), 0).toUInt());
-        m_idUnsolPfcsProtocol[i] = m_settings.value(QString("pfcsprotocol/idunsol_%1").arg(i + 1, 2, 10, QChar('0')), "0.0.0.0").toString();
-        m_unsolPfcsProtocol[i] = quint16(m_settings.value(QString("pfcsprotocol/unsol_%1").arg(i + 1, 2, 10, QChar('0')), 0).toUInt());
+        s.m_addrPfcsProtocol = m_settings.value(QString("pfcsprotocol/addr_%1").arg(i + 1, 2, 10, QChar('0')), "0.0.0.0").toString();
+        s.m_idSolPfcsProtocol = m_settings.value(QString("pfcsprotocol/idsol_%1").arg(i + 1, 2, 10, QChar('0')), "0.0.0.0").toString();
+        s.m_solPfcsProtocol = quint16(m_settings.value(QString("pfcsprotocol/sol_%1").arg(i + 1, 2, 10, QChar('0')), 0).toUInt());
+        s.m_idUnsolPfcsProtocol = m_settings.value(QString("pfcsprotocol/idunsol_%1").arg(i + 1, 2, 10, QChar('0')), "0.0.0.0").toString();
+        s.m_unsolPfcsProtocol = quint16(m_settings.value(QString("pfcsprotocol/unsol_%1").arg(i + 1, 2, 10, QChar('0')), 0).toUInt());
+        s.m_channel = quint16(m_settings.value(QString("pfcsprotocol/chn_%1").arg(i + 1, 2, 10, QChar('0')), 0).toUInt());
+        s.m_program = quint16(m_settings.value(QString("pfcsprotocol/program_%1").arg(i + 1, 2, 10, QChar('0')), 0).toUInt());
     }
 
 
@@ -37,12 +40,13 @@ MainWindow::MainWindow(QWidget *parent)
     }
     for(int i = 0; i < kMaxScrews; i++)
     {
-        if(m_solPfcsProtocol[i] > 0 && m_unsolPfcsProtocol[i] > 0)
+        auto& s = m_screw[i];
+        if(s.m_solPfcsProtocol > 0 && s.m_unsolPfcsProtocol > 0)
         {
             m_pfcd[i] = new ZPfcsProtocol(this);
             if(m_pfcd[i])
             {
-                m_pfcd[i]->init(m_addrPfcsProtocol[i], m_idSolPfcsProtocol[i], m_solPfcsProtocol[i], m_idUnsolPfcsProtocol[i], m_unsolPfcsProtocol[i]);
+                m_pfcd[i]->init(s.m_addrPfcsProtocol, s.m_idSolPfcsProtocol, s.m_solPfcsProtocol, s.m_idUnsolPfcsProtocol, s.m_unsolPfcsProtocol, s.m_channel, s.m_program);
             }
         }
     }
@@ -81,13 +85,16 @@ MainWindow::~MainWindow()
     m_settings.setValue("openprotocol/port", m_portOpenProtocol);
     for(int i = 0; i < kMaxScrews; i++)
     {
-        if(m_solPfcsProtocol[i] > 0 && m_unsolPfcsProtocol[i] > 0)
+        auto& s = m_screw[i];
+        if(s.m_solPfcsProtocol > 0 && s.m_unsolPfcsProtocol > 0)
         {
-            m_settings.setValue(QString("pfcsprotocol/addr_%1").arg(i + 1, 2, 10, QChar('0')), m_addrPfcsProtocol[i]);
-            m_settings.setValue(QString("pfcsprotocol/idsol_%1").arg(i + 1, 2, 10, QChar('0')), m_idSolPfcsProtocol[i]);
-            m_settings.setValue(QString("pfcsprotocol/sol_%1").arg(i + 1, 2, 10, QChar('0')), m_solPfcsProtocol[i]);
-            m_settings.setValue(QString("pfcsprotocol/idunsol_%1").arg(i + 1, 2, 10, QChar('0')), m_idUnsolPfcsProtocol[i]);
-            m_settings.setValue(QString("pfcsprotocol/unsol_%1").arg(i + 1, 2, 10, QChar('0')), m_unsolPfcsProtocol[i]);
+            m_settings.setValue(QString("pfcsprotocol/addr_%1").arg(i + 1, 2, 10, QChar('0')), s.m_addrPfcsProtocol);
+            m_settings.setValue(QString("pfcsprotocol/idsol_%1").arg(i + 1, 2, 10, QChar('0')), s.m_idSolPfcsProtocol);
+            m_settings.setValue(QString("pfcsprotocol/sol_%1").arg(i + 1, 2, 10, QChar('0')), s.m_solPfcsProtocol);
+            m_settings.setValue(QString("pfcsprotocol/idunsol_%1").arg(i + 1, 2, 10, QChar('0')), s.m_idUnsolPfcsProtocol);
+            m_settings.setValue(QString("pfcsprotocol/unsol_%1").arg(i + 1, 2, 10, QChar('0')), s.m_unsolPfcsProtocol);
+            m_settings.setValue(QString("pfcsprotocol/chn_%1").arg(i + 1, 2, 10, QChar('0')), s.m_channel);
+            m_settings.setValue(QString("pfcsprotocol/program_%1").arg(i + 1, 2, 10, QChar('0')), s.m_program);
         }
     }
     write("default.screw");
@@ -110,21 +117,6 @@ void MainWindow::read(const QString& filename)
         }
         f.flush();
         f.close();
-    }
-    else
-    {
-        // debug
-        for(int i = 0; i < 4; i++)
-        {
-            ZScrewData* tmp = new ZScrewData(this);
-            ScrewInfo d;
-            d.cellId = i + i * 10;
-            d.channelId = d.cellId * 123;
-            d.controllerName = QString("controller%1").arg(d.channelId);
-            d.controllerName = QString("vin%1").arg(d.channelId);
-            ui->listscrews->layout()->addWidget(tmp);
-        }
-        // debug
     }
 }
 
