@@ -36,6 +36,10 @@ void ZScrewData::set(const ScrewInfo &screw)
     ui->screwpowermax->setText(QString("%1").arg(m_data.powerMax, 0, 'f', 0));
     ui->screwtime->setText(m_data.timeStamp);
     ui->screwlastchange->setText(m_data.timeLastChange);
+    if(!m_data.ok)
+        ui->screwname->setStyleSheet("QLabel { background-color : red; color: blue}");
+    else
+        ui->screwname->setStyleSheet("QLabel { background-color : green; color: white}");
 }
 
 void ZScrewData::operator << (QTextStream& stream)

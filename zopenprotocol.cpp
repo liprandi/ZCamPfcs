@@ -417,5 +417,12 @@ void ZOpenprotocol::removeRightSpace(QString& str)
 }
 void ZOpenprotocol::resultText()
 {
-    emit dataReady(m_data);
+    ScrewInfo* pnt = new ScrewInfo;
+    m_data.ok = false;
+    if(m_data.angle <= m_data.maxAngle && m_data.angle >= m_data.minAngle)
+        if(m_data.torque <= m_data.maxTorque && m_data.torque >= m_data.minTorque)
+            m_data.ok = true;
+
+    *pnt = m_data;
+    emit dataReady(pnt);
 }

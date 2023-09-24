@@ -41,11 +41,6 @@ private:
     QString   m_addrOpenProtocol;
     quint16   m_portOpenProtocol;
     ConfigScrew m_screw[kMaxScrews];
-/*    QString   m_addrPfcsProtocol[kMaxScrews];
-    QString   m_idSolPfcsProtocol[kMaxScrews];
-    QString   m_idUnsolPfcsProtocol[kMaxScrews];
-    quint16   m_solPfcsProtocol[kMaxScrews];
-    quint16   m_unsolPfcsProtocol[kMaxScrews];*/
 
     Ui::MainWindow *ui;
 public:

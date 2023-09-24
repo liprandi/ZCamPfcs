@@ -58,10 +58,10 @@ MainWindow::MainWindow(QWidget *parent)
         for(int i=0 ; i < gOutStream.length() ; i++)
             ui->textBrowser->append(gOutStream.at(i));
     });
-    connect(m_op110, &ZOpenprotocol::dataReady, this, [this](const ScrewInfo& screw)
+    connect(m_op110, &ZOpenprotocol::dataReady, this, [this](ScrewInfo* screw)
     {
         ZScrewData* tmp = new ZScrewData(this);
-        tmp->set(screw);
+        tmp->set(*screw);
         ui->listscrews->layout()->addWidget(tmp);
         qDebug() << "add new item to screw view";
         if(ui->listscrews->layout()->count() > 880)
@@ -76,6 +76,18 @@ MainWindow::MainWindow(QWidget *parent)
                 }
             }
         }
+        for(const auto chn: m_pfcd)
+        {
+            if(chn)
+            {
+                if(chn->checkChnPrg(screw->channelId, screw->programNumber))
+                {
+                    chn->newData(*screw);
+                    break;
+                }
+            }
+        }
+		delete screw;			 
     });
 }
 

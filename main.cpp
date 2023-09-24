@@ -5,16 +5,39 @@
 #include <QTranslator>
 #include <QDateTime>
 #include <QMutex>
+#include <QFile>
+#include <QDateTime>
 #include <iostream>
 
 QMutex messageMutex;
+QFile g_log;
+int   g_hour = 0;
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     QMutexLocker locker(&messageMutex);
-
+    QDateTime dt = QDateTime::currentDateTime();
+    int diff = abs(g_hour - dt.time().hour());
+    if(!g_log.isOpen() || diff > 6)
+    {
+        if(g_log.isOpen())
+        {
+            g_log.flush();
+            g_log.close();
+        }
+        g_hour = int(dt.time().hour() / 6) * 6;
+        QString name = QString("Log%1%2%3%4.log").arg(dt.date().year(), 4, 10, QChar('0')).arg(dt.date().month(), 2, 10, QChar('0')).arg(dt.date().day(), 2, 10, QChar('0')).arg(g_hour, 2, 10, QChar('0'));
+        g_log.setFileName(name);
+        g_log.open(QFile::Append);
+    }
     const QString txt(QString(QDateTime::currentDateTime().toString() + ": "
                               + QString("%1(%2): %3").arg(context.file).arg(context.line).arg(msg)));
+    if(g_log.isOpen())
+    {
+        g_log.write(txt.toLatin1());
+        g_log.write("\n");
+        g_log.flush();
+    }
     switch (type) {
     case QtInfoMsg:
     case QtDebugMsg:

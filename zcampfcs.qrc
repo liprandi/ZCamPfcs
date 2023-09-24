@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/icon">
+        <file alias="ok.png">resource/checkmark.png</file>
+        <file alias="ko.png">resource/x-mark.png</file>
+    </qresource>
+</RCC>

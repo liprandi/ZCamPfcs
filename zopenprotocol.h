@@ -15,7 +15,7 @@ public:
 public slots:
     void ipAndPort(const QString& addr, quint16 port);
 signals:
-    void dataReady(const ScrewInfo& screw);
+    void dataReady(ScrewInfo* screw);
 private:
     bool connectToServer();
     bool connectMID0001();

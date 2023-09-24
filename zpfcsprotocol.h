@@ -3,6 +3,7 @@
 
 #include <QThread>
 #include <QTcpSocket>
+#include "screwinfo.h"
 
 class ZPfcsProtocol: public QThread
 {
@@ -14,12 +15,16 @@ public:
 
 public:
     void init(const QString& addr, const QString& solID, quint16 sol, const QString &unsolID, quint16 unsol, quint16 channel, quint16 program);
+    bool checkChnPrg(quint16 channel, quint16 program) const;
+    void newData(const ScrewInfo& data);
 private:
     bool openTcpSol();
     bool openTcpUnsol();
     bool checkMessageUnsol();
     bool sendSol9999();
     bool sendUnsol9999();
+    bool sendSol0002();
+
 private:
     QTcpSocket* m_tcpsol;
     QTcpSocket* m_tcpunsol;
@@ -33,6 +38,8 @@ private:
     quint16 m_program;   // program connected to this screw
     uint    m_solSeqNumber; // sequence number
     uint    m_unsolSeqNumber; // sequence number
+    ScrewInfo m_newScrewData;    // screw info to send to PFCS
+    bool    m_newDataToSend;    // request new send to PFCS
     bool m_quit;
     bool m_run;
 };

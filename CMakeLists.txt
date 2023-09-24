@@ -54,6 +54,7 @@ else()
     else()
         add_executable(ZCamPfcs
             ${PROJECT_SOURCES}
+            zcampfcs.qrc
         )
     endif()
 

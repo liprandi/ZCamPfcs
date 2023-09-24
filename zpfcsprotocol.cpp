@@ -13,6 +13,7 @@ ZPfcsProtocol::ZPfcsProtocol(QObject *parent):
     , m_quit(false)
     , m_run(false)
 {
+    m_newDataToSend = false;
     m_solSeqNumber = 0; // sequence number
     m_unsolSeqNumber = 0; // sequence number
 }
@@ -33,9 +34,9 @@ void ZPfcsProtocol::init(const QString& addr, const QString& solID, quint16 sol,
     m_solID = solID;
     m_unsolID = unsolID;
     m_sol = sol;
-    m_unsol = channel;
-    m_channel = program;
-    m_program = unsol;
+    m_unsol = unsol;
+    m_channel = channel;
+    m_program = program;
     if(m_solID.length() > 4)
         m_solID.truncate(4);
     if(m_solID.length() < 4)
@@ -59,25 +60,34 @@ void ZPfcsProtocol::run()
     int step = 0;
     while(!m_quit)
     {
+        if(!m_tcpsol || !m_tcpunsol)
+            step = 0;
+
         switch(step)
         {
         case 0: // open ports
             if(openTcpSol() && openTcpUnsol())
                 step = 1;
+            else
+                sleep(10);
             break;
         case 1: // wait unsol message
-            if(!checkMessageUnsol())
-                step = 2;
+            for(int i = 0; i < 59 && !m_quit; i++)
+            {
+                if(m_newDataToSend)
+                    sendSol0002();
+                else if(checkMessageUnsol())
+                    i = 0;
+            }
+            step = 2;
             break;
         case 2:
             sendSol9999();
             step = 3;
-            wait(10s);
             break;
         case 3:
             sendUnsol9999();
-            step = 2;
-            wait(10s);
+            step = 1;
             break;
         }
     }
@@ -105,7 +115,8 @@ bool ZPfcsProtocol::sendSol9999()
 
     QByteArray d;
     d += "CamDoBra";    // vendor company name
-    d += "Paolo ";      // Model number
+    str = QString("CH%1-%2").arg(m_channel, 1, 10, QChar('0')).arg(m_program, 2, 10, QChar('0'));
+    d += str.toLatin1();// Model number
     d += "00.100:";     // Protocol Version + ":"
     d += ":Sol:1:AUTO:"; // last part
     QByteArray b;
@@ -135,7 +146,8 @@ bool ZPfcsProtocol::sendUnsol9999()
 
     QByteArray d;
     d += "CamDoBra";    // vendor company name
-    d += "Paolo ";      // Model number
+    str = QString("CH%1-%2").arg(m_channel, 1, 10, QChar('0')).arg(m_program, 2, 10, QChar('0'));
+    d += str.toLatin1();// Model number
     d += "00.100:";     // Protocol Version + ":"
     d += ":Unsol:1:AUTO:"; // last part
     QByteArray b;
@@ -172,8 +184,10 @@ bool ZPfcsProtocol::openTcpSol()
         m_tcpsol->close();
         sleep(3);
     }
+    if(!m_tcpsol)
+        return ret;
     m_tcpsol->connectToHost(m_addr, m_sol);
-    if(m_tcpsol->waitForConnected(3000))
+    if(m_tcpsol->waitForConnected(10000))
     {
         ret = true;
         connect(m_tcpsol, &QTcpSocket::disconnected, this, [this]{m_tcpsol->close(); delete m_tcpsol; m_tcpsol = 0l;});
@@ -200,8 +214,10 @@ bool ZPfcsProtocol::openTcpUnsol()
         m_tcpunsol->close();
         sleep(3);
     }
+    if(!m_tcpunsol)
+        return ret;
     m_tcpunsol->connectToHost(m_addr, m_unsol);
-    if(m_tcpunsol->waitForConnected(3000))
+    if(m_tcpunsol->waitForConnected(10000))
     {
         ret = true;
         connect(m_tcpunsol, &QTcpSocket::disconnected, this, [this]{m_tcpunsol->close(); delete m_tcpunsol; m_tcpunsol = 0l;});
@@ -218,11 +234,121 @@ bool ZPfcsProtocol::openTcpUnsol()
 bool ZPfcsProtocol::checkMessageUnsol()
 {
     bool ret = false;
+
     if(m_tcpunsol->waitForReadyRead(1000))
     {
         QByteArray buff = m_tcpunsol->readAll();
         qDebug() << "PFD unsol: " << buff;
+        ret = true;
 
+        if(buff.length() >= 51)
+        {
+            auto id = buff.mid(0, 4);
+            auto acknak = buff.mid(4, 3);
+            auto seq = buff.mid(7, 6);
+            auto type_msg = buff.mid(13, 4);
+            auto data_len = buff.mid(17, 4);
+            auto type_code = buff.mid(21, 2);
+            if(!type_msg.compare("0003"))
+            {
+                auto vin = buff.mid(23, 8);
+                auto avi = buff.mid(31, 8);
+                auto status = buff.mid(39, 2);
+                auto tracker = buff.mid(41, 7);
+                auto special = buff.mid(48, buff.length() - 1 - 48);
+                qDebug() << id << "," << acknak << "," << seq << "," << type_msg << "," << data_len << "," << type_code << "," << vin << "," << avi << "," << status << "," << tracker << "," << special;
+                if(buff[buff.length() - 1] == '\r')
+                {
+                    QByteArray b;
+                    b += m_unsolID.toLatin1();
+                    b += "ACK";
+                    b += seq;
+                    m_unsolSeqNumber = atoi(seq) + 1;
+                    b += type_msg;
+                    b += " \r";
+                    m_tcpunsol->write(b);
+                }
+            }
+        }
     }
     return ret;
+}
+
+bool ZPfcsProtocol::checkChnPrg(quint16 channel, quint16 program) const
+{
+    return (m_channel && m_program && m_channel == channel && m_program == program);
+}
+void ZPfcsProtocol::newData(const ScrewInfo& data)
+{
+    if(!m_newDataToSend)
+    {
+        m_newScrewData = data;
+        m_newDataToSend = true;
+    }
+}
+bool ZPfcsProtocol::sendSol0002()
+{
+    bool ret = false;
+    QString str;
+
+    QByteArray d;
+    d += "0001CS";    // start data screwing
+    str = m_newScrewData.vinNumber;
+    for(int i = str.length(); i < 8; i++)
+    {
+        str += ' ';
+    }
+    d += str.mid(0, 8).toLatin1();
+    d += "ER01";
+    d += m_newScrewData.timeStamp.mid(0, 4).toLatin1(); // year
+    d += m_newScrewData.timeStamp.mid(5, 2).toLatin1(); // month
+    d += m_newScrewData.timeStamp.mid(8, 2).toLatin1(); // day
+    d += m_newScrewData.timeStamp.mid(11, 2).toLatin1(); // hours
+    d += m_newScrewData.timeStamp.mid(14, 2).toLatin1(); // minutes
+    d += m_newScrewData.timeStamp.mid(17, 2).toLatin1(); // seconds
+    if(m_newScrewData.ok)
+        d += "PP0101";
+    else
+        d += "FF0101";
+    if(!m_newScrewData.ok && (m_newScrewData.torque < m_newScrewData.minTorque || m_newScrewData.torque > m_newScrewData.maxTorque))
+        d += 'F';
+    else
+        d += 'P';
+    str = QString("%1").arg(m_newScrewData.maxTorque, 5, 'f', 1, QChar('0'));
+    d += str.toLatin1();
+    str = QString("%1").arg(m_newScrewData.minTorque, 5, 'f', 1, QChar('0'));
+    d += str.toLatin1();
+    str = QString("%1").arg(m_newScrewData.torque, 5, 'f', 1, QChar('0'));
+    d += str.toLatin1();
+    if(!m_newScrewData.ok && (m_newScrewData.angle < m_newScrewData.minAngle || m_newScrewData.angle > m_newScrewData.maxAngle))
+        d += 'F';
+    else
+        d += 'P';
+    str = QString("%1").arg(m_newScrewData.maxAngle, 5, 'f', 0, QChar('0'));
+    d += str.toLatin1();
+    str = QString("%1").arg(m_newScrewData.minAngle, 5, 'f', 0, QChar('0'));
+    d += str.toLatin1();
+    str = QString("%1").arg(m_newScrewData.angle, 5, 'f', 0, QChar('0'));
+    d += str.toLatin1();
+    QByteArray b;
+    b += m_solID.toLatin1();
+    b += "   ";
+    str = QString("%1").arg(++m_solSeqNumber, 6, 10, QChar('0'));
+    b += str.toLatin1();
+    b += "0002";
+    str = QString("%1").arg(d.length(), 4, 10, QChar('0'));
+    b += str.toLatin1();
+    b += d;
+    b += '\r';
+    m_tcpsol->write(b);
+    m_newDataToSend = false;
+    qDebug() << "PFCS tx:" << m_solID << ":" << b << "\n";
+    if(m_tcpsol->waitForReadyRead(10000))
+    {
+        auto buff = m_tcpsol->readAll();
+        qDebug() << "PFCS rx:" << m_solID << ":" << buff << "\n";
+        ret = true;
+    }
+    return ret;
+
 }

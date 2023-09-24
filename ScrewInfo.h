@@ -43,6 +43,7 @@ struct ScrewInfo
     uchar counterStatus;
     QString tighteningID;
     QString tighteningStatusStr;
+    bool ok;
 };
 
 #endif // SCREWINFO_H
