@@ -1,8 +1,5 @@
 #include "zpfcsprotocol.h"
 #include <QNetworkInterface>
-#include <chrono>
-
-using namespace std::chrono_literals;
 
 ZPfcsProtocol::ZPfcsProtocol(QObject *parent):
     QThread(parent)
@@ -14,7 +11,7 @@ ZPfcsProtocol::ZPfcsProtocol(QObject *parent):
     , m_run(false)
 {
     m_newDataToSend = false;
-    m_solSeqNumber = 0; // sequence number
+    m_solSeqNumber = 100; // sequence number
     m_unsolSeqNumber = 0; // sequence number
 }
 
@@ -28,9 +25,10 @@ ZPfcsProtocol::~ZPfcsProtocol()
     }
  }
 
-void ZPfcsProtocol::init(const QString& addr, const QString& solID, quint16 sol, const QString& unsolID, quint16 unsol, quint16 channel, quint16 program)
+void ZPfcsProtocol::init(const QString& addr, const QString& solID, quint16 sol, const QString& unsolID, quint16 unsol, quint16 channel, quint16 program, const QString& name)
 {
     m_addr = addr;
+    m_name = name;
     m_solID = solID;
     m_unsolID = unsolID;
     m_sol = sol;
@@ -51,7 +49,7 @@ void ZPfcsProtocol::init(const QString& addr, const QString& solID, quint16 sol,
         for(qsizetype i = m_unsolID.length(); i < 4; i++)
             m_unsolID.push_back(QChar(' '));
     }
-    qDebug() << tr("PFD ") << m_solID << "=" << m_addr << ":" << m_sol << "/" << m_unsolID << "=" << m_addr << ":" << m_unsol << " screw=" << m_channel << "." << m_program;
+    qDebug() << tr("PFD ") << m_name << "-" << m_solID << "=" << m_addr << ":" << m_sol << "/" << m_unsolID << "=" << m_addr << ":" << m_unsol << " screw=" << m_channel << "." << m_program;
     start();
 }
 void ZPfcsProtocol::run()
@@ -60,7 +58,7 @@ void ZPfcsProtocol::run()
     int step = 0;
     while(!m_quit)
     {
-        if(!m_tcpsol || !m_tcpunsol)
+        if(!m_tcpsol || !m_tcpunsol || !m_tcpsol->isOpen() || !m_tcpunsol->isOpen())
             step = 0;
 
         switch(step)
@@ -115,28 +113,31 @@ bool ZPfcsProtocol::sendSol9999()
 
     QByteArray d;
     d += "CamDoBra";    // vendor company name
-    str = QString("CH%1-%2").arg(m_channel, 1, 10, QChar('0')).arg(m_program, 2, 10, QChar('0'));
+    str = QString("-%1-").arg(m_name, 4);
     d += str.toLatin1();// Model number
     d += "00.100:";     // Protocol Version + ":"
     d += ":Sol:1:AUTO:"; // last part
     QByteArray b;
     b += m_solID.toLatin1();
     b += "   ";
-    str = QString("%1").arg(++m_solSeqNumber, 6, 10, QChar('0'));
+    str = QString("%1").arg(m_solSeqNumber, 6, 10, QChar('0'));
     b += str.toLatin1();
     b += "9999";
     str = QString("%1").arg(d.length(), 4, 10, QChar('0'));
     b += str.toLatin1();
     b += d;
     b += '\r';
-    m_tcpsol->write(b);
+    if(m_tcpsol)
+        m_tcpsol->write(b);
     qDebug() << "PFCS tx:" << m_solID << ":" << b << "\n";
-    if(m_tcpsol->waitForReadyRead(10000))
+    if(m_tcpsol && m_tcpsol->waitForReadyRead(10000))
     {
         auto buff = m_tcpsol->readAll();
         qDebug() << "PFCS rx:" << m_solID << ":" << buff << "\n";
         ret = true;
     }
+    else
+        ++m_solSeqNumber;
     return ret;
 }
 bool ZPfcsProtocol::sendUnsol9999()
@@ -146,28 +147,31 @@ bool ZPfcsProtocol::sendUnsol9999()
 
     QByteArray d;
     d += "CamDoBra";    // vendor company name
-    str = QString("CH%1-%2").arg(m_channel, 1, 10, QChar('0')).arg(m_program, 2, 10, QChar('0'));
+    str = QString("-%1-").arg(m_name, 4);
     d += str.toLatin1();// Model number
     d += "00.100:";     // Protocol Version + ":"
     d += ":Unsol:1:AUTO:"; // last part
     QByteArray b;
     b += m_unsolID.toLatin1();
     b += "   ";
-    str = QString("%1").arg(++m_unsolSeqNumber, 6, 10, QChar('0'));
+    str = QString("%1").arg(m_unsolSeqNumber, 6, 10, QChar('0'));
     b += str.toLatin1();
     b += "9999";
     str = QString("%1").arg(d.length(), 4, 10, QChar('0'));
     b += str.toLatin1();
     b += d;
     b += '\r';
-    m_tcpunsol->write(b);
+    if(m_tcpunsol)
+        m_tcpunsol->write(b);
     qDebug() << "PFCS tx:" << m_unsolID << ":" << b << "\n";
-    if(m_tcpunsol->waitForReadyRead(10000))
+    if(m_tcpunsol && m_tcpunsol->waitForReadyRead(10000))
     {
         auto buff = m_tcpunsol->readAll();
         qDebug() << "PFCS rx:" << m_unsolID << ":" << buff << "\n";
         ret = true;
     }
+    else
+        ++m_unsolSeqNumber;
     return ret;
 }
 
@@ -190,7 +194,11 @@ bool ZPfcsProtocol::openTcpSol()
     if(m_tcpsol->waitForConnected(10000))
     {
         ret = true;
-        connect(m_tcpsol, &QTcpSocket::disconnected, this, [this]{m_tcpsol->close(); delete m_tcpsol; m_tcpsol = 0l;});
+        connect(m_tcpsol, &QTcpSocket::disconnected, this, [this]()
+        {
+            qDebug() << tr("PFD ") << m_name << " m_tcpsol disconnected";
+            m_tcpsol->close(); delete m_tcpsol; m_tcpsol = 0l;
+        });
     }
     else
     {
@@ -220,7 +228,11 @@ bool ZPfcsProtocol::openTcpUnsol()
     if(m_tcpunsol->waitForConnected(10000))
     {
         ret = true;
-        connect(m_tcpunsol, &QTcpSocket::disconnected, this, [this]{m_tcpunsol->close(); delete m_tcpunsol; m_tcpunsol = 0l;});
+        connect(m_tcpunsol, &QTcpSocket::disconnected, this, [this]()
+        {
+            qDebug() << tr("PFD ") << m_name << " m_tcpunsol disconnected";
+            m_tcpunsol->close(); delete m_tcpunsol; m_tcpunsol = 0l;
+        });
     }
     else
     {
@@ -246,6 +258,7 @@ bool ZPfcsProtocol::checkMessageUnsol()
             auto id = buff.mid(0, 4);
             auto acknak = buff.mid(4, 3);
             auto seq = buff.mid(7, 6);
+            m_unsolSeqNumber = atoi(seq);
             auto type_msg = buff.mid(13, 4);
             auto data_len = buff.mid(17, 4);
             auto type_code = buff.mid(21, 2);
@@ -278,6 +291,10 @@ bool ZPfcsProtocol::checkChnPrg(quint16 channel, quint16 program) const
 {
     return (m_channel && m_program && m_channel == channel && m_program == program);
 }
+bool ZPfcsProtocol::checkName(const QString& name) const
+{
+    return m_name.compare(name, Qt::CaseInsensitive) == 0;
+}
 void ZPfcsProtocol::newData(const ScrewInfo& data)
 {
     if(!m_newDataToSend)
@@ -300,7 +317,7 @@ bool ZPfcsProtocol::sendSol0002()
     }
     d += str.mid(0, 8).toLatin1();
     d += "ER01";
-    d += m_newScrewData.timeStamp.mid(0, 4).toLatin1(); // year
+    d += m_newScrewData.timeStamp.mid(2, 2).toLatin1(); // year
     d += m_newScrewData.timeStamp.mid(5, 2).toLatin1(); // month
     d += m_newScrewData.timeStamp.mid(8, 2).toLatin1(); // day
     d += m_newScrewData.timeStamp.mid(11, 2).toLatin1(); // hours

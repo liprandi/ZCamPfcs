@@ -20,24 +20,90 @@
     </message>
     <message>
         <location filename="mainwindow.ui" line="77"/>
+        <source>Current Body Screwing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="87"/>
+        <source>OP110 Fender</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="96"/>
+        <location filename="mainwindow.ui" line="122"/>
+        <source>ID:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="116"/>
+        <source>OP150-160  Flap Door</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="148"/>
         <source>List of last screws</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="122"/>
+        <location filename="mainwindow.ui" line="193"/>
         <source>Debug</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="402"/>
+        <source>Warning operation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="405"/>
+        <source>Fault operation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="408"/>
+        <source>Normal operation mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="437"/>
+        <source>Cam PFCS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="437"/>
+        <source>Program in running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="445"/>
+        <source>Mi&amp;nimize</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="448"/>
+        <source>Ma&amp;ximize</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="451"/>
+        <source>&amp;Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="454"/>
+        <source>&amp;Quit</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>ZOpenprotocol</name>
     <message>
-        <location filename="zopenprotocol.cpp" line="26"/>
+        <location filename="zopenprotocol.cpp" line="28"/>
         <source>Start ip:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="zopenprotocol.cpp" line="89"/>
+        <location filename="zopenprotocol.cpp" line="91"/>
         <source>Tightening time-out connection</source>
         <translation type="unfinished"></translation>
     </message>
@@ -45,13 +111,15 @@
 <context>
     <name>ZPfcsProtocol</name>
     <message>
-        <location filename="zpfcsprotocol.cpp" line="54"/>
+        <location filename="zpfcsprotocol.cpp" line="52"/>
+        <location filename="zpfcsprotocol.cpp" line="199"/>
+        <location filename="zpfcsprotocol.cpp" line="233"/>
         <source>PFD </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="zpfcsprotocol.cpp" line="197"/>
-        <location filename="zpfcsprotocol.cpp" line="227"/>
+        <location filename="zpfcsprotocol.cpp" line="205"/>
+        <location filename="zpfcsprotocol.cpp" line="239"/>
         <source>PFD: cannot open port </source>
         <translation type="unfinished"></translation>
     </message>

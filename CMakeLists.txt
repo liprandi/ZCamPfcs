@@ -30,8 +30,11 @@ set(PROJECT_SOURCES
         zscrewdata.cpp
         zscrewdata.ui
         screwinfo.h
+        zcampfcs.rc
+        CAMreflected.ico
         ${TS_FILES}
 )
+set(APP_ICON_RESOURCE_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/zcampfcs.rc")
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(ZCamPfcs
@@ -54,6 +57,7 @@ else()
     else()
         add_executable(ZCamPfcs
             ${PROJECT_SOURCES}
+            ${APP_ICON_RESOURCE_WINDOWS}
             zcampfcs.qrc
         )
     endif()

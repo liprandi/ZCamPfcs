@@ -14,8 +14,9 @@ public:
     void run() override;
 
 public:
-    void init(const QString& addr, const QString& solID, quint16 sol, const QString &unsolID, quint16 unsol, quint16 channel, quint16 program);
+    void init(const QString& addr, const QString& solID, quint16 sol, const QString &unsolID, quint16 unsol, quint16 channel, quint16 program, const QString& name);
     bool checkChnPrg(quint16 channel, quint16 program) const;
+    bool checkName(const QString& name) const;
     void newData(const ScrewInfo& data);
 private:
     bool openTcpSol();
@@ -30,6 +31,7 @@ private:
     QTcpSocket* m_tcpunsol;
     QString m_message;
     QString m_addr;
+    QString m_name;
     QString m_solID;    // 4 letter machine ID for sol
     QString m_unsolID;  // 4 letter machine ID for unsol
     quint16 m_sol;      // sollicited port
